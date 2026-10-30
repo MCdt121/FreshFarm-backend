@@ -19,17 +19,17 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
     private ProductMapper productMapper;
     @Override
     public boolean removeById(Serializable id) {
-        // 1. 统计这个分类下有多少个商品
+        //  统计这个分类下有多少个商品
         Long count = productMapper.selectCount(
-                new LambdaQueryWrapper<Product>().eq(Product::getCategory_id, id)
+                new LambdaQueryWrapper<Product>().eq(Product::getCategoryId, id)
         );
 
-        // 2. 如果大于0，直接抛出咱们写好的业务异常，被全局异常处理器拦截
+        // 如果大于0，业务异常，被全局异常处理器拦截
         if (count > 0) {
             throw new BizException("该分类下还有 " + count + " 个商品，无法删除！");
         }
 
-        // 3. 如果没有商品，放行删除
+        // 如果没有商品，放行删除
         return super.removeById(id);
     }
 }

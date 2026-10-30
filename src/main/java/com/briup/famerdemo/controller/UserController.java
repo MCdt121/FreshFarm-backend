@@ -8,11 +8,9 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/user")
 public class UserController {
-
-    // 模拟登录接口
     @PostMapping("/login")
     public Result<String> login(@RequestParam String username, @RequestParam String password) {
-        // 假设我们数据库里有个用户，账号 admin，密码 123456
+        // 用户:账号 admin，密码 123456
         if ("admin".equals(username) && "123456".equals(password)) {
             // 核心：调用 Sa-Token 登录，参数是用户 ID
             StpUtil.login(10001);
@@ -29,7 +27,6 @@ public class UserController {
     // 测试获取用户信息的接口
     @GetMapping("/info")
     public Result<String> info() {
-        // 如果能进到这里，说明已经登录了。通过 getLoginId 拿到刚才存的 10001
         return Result.success("当前登录的用户ID是：" + StpUtil.getLoginId());
     }
 }

@@ -62,10 +62,10 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     }
     @Override
     public boolean updateById(Product product) {
-        // 1. 先更新数据库
+        // 先更新数据库
         boolean success = super.updateById(product);
 
-        // 2. 如果更新成功，立刻去把 Redis 里的旧数据删掉！
+        // 更新成功，把 Redis 里的旧数据删掉
         if (success) {
             String key = "product:" + product.getId();
             try {
@@ -79,10 +79,10 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     }
     @Override
     public boolean removeById(java.io.Serializable id) {
-        // 1. 先删除数据库记录
+        // 删除数据库记录
         boolean success = super.removeById(id);
 
-        // 2. 删库成功，立刻删缓存
+        // 删库成功，立刻删缓存
         if (success) {
             String key = "product:" + id;
             try {

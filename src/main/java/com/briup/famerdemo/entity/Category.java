@@ -11,4 +11,5 @@ public class Category {
     @TableId(value="id",type= IdType.AUTO)
     private Integer id;
     private String name;
+    private Integer product_count;
 }

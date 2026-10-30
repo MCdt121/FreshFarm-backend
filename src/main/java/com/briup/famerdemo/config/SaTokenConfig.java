@@ -7,11 +7,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class SaTokenConfig implements WebMvcConfigurer {
-
-    // 注册 Sa-Token 拦截器，打开注解式鉴权功能
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        // 拦截所有请求，并开启注解校验
         registry.addInterceptor(new SaInterceptor()).addPathPatterns("/**");
     }
 }

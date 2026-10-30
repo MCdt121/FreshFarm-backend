@@ -1,5 +1,6 @@
 package com.briup.famerdemo.common;
 
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -21,6 +22,12 @@ public class GlobalExceptionHandler {
         // 返回 401 状态码，提示前端去登录
         return Result.error(401,"未登录，请先登录！");
     }
-
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public Result<String> handleValidException(MethodArgumentNotValidException e) {
+        // 获取第一个校验失败的提示信息
+        String message = e.getBindingResult().getFieldError().getDefaultMessage();
+        System.out.println("【参数校验拦截】：" + message);
+        return Result.error(400, message); // 返回 400 表示参数错误
+    }
 
 }

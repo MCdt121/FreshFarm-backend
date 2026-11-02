@@ -28,4 +28,6 @@ public class Product {
     @DecimalMin(value = "0.01", message = "价格必须大于0")
     private BigDecimal price;
 
+    @NotNull(message="商品数量不能为空")
+    private Integer stock;
 }

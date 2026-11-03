@@ -37,7 +37,8 @@ public class ProductController {
     @PostMapping("/update")
     public Result<Void> updateProduct(@Validated @RequestBody Product product){
         productService.updateById(product);
-        return Result.success(null);
+        boolean ok = productService.updateById(product);
+        return ok ? Result.success(null) : Result.error(404, "商品不存在，更新失败");
     }
 
     @DeleteMapping("/remove/{id}")

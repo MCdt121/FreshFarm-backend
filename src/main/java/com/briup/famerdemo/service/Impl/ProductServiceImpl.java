@@ -70,6 +70,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
             String key = "product:" + product.getId();
             try {
                 stringRedisTemplate.delete(key);
+                stringRedisTemplate.delete("stock:" + product.getId());
                 System.out.println("商品修改成功，缓存已删除！");
             } catch (Exception e) {
                 System.out.println("缓存删除失败，但不影响主流程");

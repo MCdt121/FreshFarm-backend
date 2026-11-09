@@ -14,8 +14,24 @@
 2. **异步解耦**：基于 RabbitMQ 实现新增商品后分类统计数据的异步落库，提升主链路响应速度。
 3. **全局安全与规范**：集成 Sa-Token 实现无状态登录拦截；自定义 `Result<T>` 与 `@RestControllerAdvice` 全局异常处理器，实现参数校验与业务异常的规范返回。
 
-## 🚀 快速启动
-1. 使用 Docker 启动本地 Redis 与 RabbitMQ 环境。
-2. 导入 SQL 脚本至 MySQL 数据库。
-3. 修改 `application.yml` 中的连接配置。
-4. 启动项目，访问接口文档：`http://localhost:8080/doc.html`（Knife4j）。
+## 🚀 快速启动 (Quick Start)
+
+本项目依赖以下环境，推荐使用 Docker 一键启动：
+
+### 1. 启动基础中间件 (MySQL / Redis / RabbitMQ)
+请在项目根目录下执行以下命令：
+\`\`\`bash
+docker-compose up -d
+\`\`\`
+> 启动后：
+> - MySQL 端口：3306 (账号 root / 密码 root)
+> - Redis 端口：6379
+> - RabbitMQ 端口：5672 (管理后台访问 http://localhost:15672，账号/密码 guest/guest)
+
+### 2. 导入数据库
+将项目 `sql/` 目录下的 `farm_mall.sql` 导入到 MySQL 数据库中。（如果你没建 sql 目录，就把建表语句贴在这里或者新建一个 SQL 文件）
+
+### 3. 启动项目
+修改 `application.yml` 中的数据库、Redis、RabbitMQ 连接配置（如果你的本地环境是默认的，则无需修改）。
+启动 `FamerdemoApplication` 主类。
+访问接口文档：`http://localhost:8080/doc.html`档：`http://localhost:8080/doc.html`（Knife4j）。

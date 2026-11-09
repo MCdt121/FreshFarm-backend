@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0.33
+    container_name: farmer-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: farm_mall
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  redis:
+    image: redis:latest
+    container_name: farmer-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+
+  rabbitmq:
+    image: rabbitmq:3.12-management # 带管理后台的版本
+    container_name: farmer-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+volumes:
+  mysql-data:
+  redis-data:

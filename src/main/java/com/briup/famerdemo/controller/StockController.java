@@ -32,13 +32,13 @@ public class StockController {
         return Result.success("扣减成功");
     }
     // 被限流 / 熔断时
-    public Result<Product> handleBlock(Integer id, BlockException e) {
+    public Result<Product> handleDeductBlock(Integer id, BlockException e) {
         log.warn("stockDeduct 被限流或熔断，id={}", id);
         return Result.error(429, "当前访问人数较多，请稍后再试");
     }
 
     // 方法内部异常时
-    public Result<Product> handleFallback(Integer id, Throwable t) {
+    public Result<Product> handleDeductFallback(Integer id, Throwable t) {
         log.error("stockDeduct 执行失败，id={}", id, t);
         return Result.error(503, "服务暂时不可用，请稍后再试");
     }

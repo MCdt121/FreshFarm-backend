@@ -19,20 +19,23 @@ public class SentinelConfig {
         return new SentinelResourceAspect();
     }
 
-@PostConstruct
-public void initFlowRules(){
-    // 限流：这个资源 QPS 超过 5 就直接拒绝
-    FlowRule flow = new FlowRule("getProduct");
-    flow.setCount(5);
-    flow.setGrade(RuleConstant.FLOW_GRADE_QPS);
-    FlowRuleManager.loadRules(List.of(flow));
+    @PostConstruct
+    public void initRules() {
+        FlowRule gp = new FlowRule();
+        gp.setResource("getProduct");
+        gp.setGrade(RuleConstant.FLOW_GRADE_QPS);
+        gp.setCount(5);
+        FlowRule ai = new FlowRule();
+        ai.setResource("aiDesc");
+        ai.setGrade(RuleConstant.FLOW_GRADE_QPS);
+        ai.setCount(5);
+        FlowRuleManager.loadRules(List.of(gp, ai));
 
-// 熔断：10 秒内异常比例超过 50% 且请求数 >5，就熔断 10 秒
-    DegradeRule degrade = new DegradeRule("getProduct");
-    degrade.setGrade(RuleConstant.DEGRADE_GRADE_EXCEPTION_RATIO);
-    degrade.setCount(0.5);
-    degrade.setTimeWindow(10);
-    degrade.setMinRequestAmount(5);
-    DegradeRuleManager.loadRules(List.of(degrade));
-}
+        DegradeRule dg = new DegradeRule("getProduct");
+        dg.setGrade(RuleConstant.DEGRADE_GRADE_EXCEPTION_RATIO);
+        dg.setCount(0.5);
+        dg.setTimeWindow(10);
+        dg.setMinRequestAmount(5);
+        DegradeRuleManager.loadRules(List.of(dg));
+    }
 }

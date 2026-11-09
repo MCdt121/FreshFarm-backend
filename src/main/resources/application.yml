@@ -16,3 +16,12 @@ spring:
     port: 5672
     username: guest
     password: guest
+
+  redis:
+    redisson:
+      config: |
+        singleServerConfig:
+          address: redis://localhost:6379
+          timeout: 2000 
+          # 只重试 1 次
+          retryAttempts: 1 

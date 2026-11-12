@@ -51,18 +51,21 @@ public class StockServiceImpl extends ServiceImpl<ProductMapper, Product> implem
     @Override
     public void deduct(Integer productId, Integer quantity) {
         String stockKey = "stock:" + productId;
-
-        // 1. 预热：如果 Redis 里没有，先从数据库读出来放进去 (和你之前一样)
-        if (Boolean.FALSE.equals(stringRedisTemplate.hasKey(stockKey))) {
-            Product product = productMapper.selectById(productId);
-            if (product != null) {
-                stringRedisTemplate.opsForValue().set(stockKey, String.valueOf(product.getStock()));
-            } else {
-                throw new BizException("商品不存在");
-            }
+        if (!redisAvailable.get()) {
+            deductByDb(productId, quantity);
+            return;
         }
 
         try {
+            // 预热：如果 Redis 里没有，先从数据库读出来放进去 (和你之前一样)
+            if (Boolean.FALSE.equals(stringRedisTemplate.hasKey(stockKey))) {
+                Product product = productMapper.selectById(productId);
+                if (product != null) {
+                    stringRedisTemplate.opsForValue().set(stockKey, String.valueOf(product.getStock()));
+                } else {
+                    throw new BizException("商品不存在");
+                }
+            }
             // 2. 执行 Lua 脚本：无锁化、单线程原子扣减
             Long result = stringRedisTemplate.execute(
                     stockScript,

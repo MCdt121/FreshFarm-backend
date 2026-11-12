@@ -19,6 +19,14 @@ spring:
     port: 5672
     username: guest
     password: guest
+    listener:
+      simple:
+        default-requeue-rejected: false   # nack 时 requeue=false → 进死信
+        retry:
+          enabled: true
+          max-attempts: 3   #本地重试3次
+          initial-interval: 1000
+
 
 
   ai:

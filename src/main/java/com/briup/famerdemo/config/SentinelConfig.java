@@ -21,11 +21,19 @@ public class SentinelConfig {
 
     @PostConstruct
     public void initRules() {
+        //stock商品扣减降级限流
+        FlowRule dbFallback = new FlowRule();
+        dbFallback.setResource("stockDeductDbFallback");
+        dbFallback.setGrade(RuleConstant.FLOW_GRADE_QPS);
+        dbFallback.setCount(10);
+        dbFallback.setControlBehavior(RuleConstant.CONTROL_BEHAVIOR_RATE_LIMITER);
+        dbFallback.setMaxQueueingTimeMs(500);
+        //
         FlowRule gp = new FlowRule();
         gp.setResource("getProduct");
         gp.setGrade(RuleConstant.FLOW_GRADE_QPS);
         gp.setCount(5);
-
+        //springai
         FlowRule ai = new FlowRule();
         ai.setResource("aiDesc");
         ai.setGrade(RuleConstant.FLOW_GRADE_QPS);
@@ -35,7 +43,7 @@ public class SentinelConfig {
         stock.setResource("stockDeduct");
         stock.setGrade(RuleConstant.FLOW_GRADE_QPS);
         stock.setCount(10);   // 按你压测情况调整
-        FlowRuleManager.loadRules(List.of(gp, ai, stock));
+        FlowRuleManager.loadRules(List.of(gp, ai, stock,dbFallback));
 
         DegradeRule dg = new DegradeRule("getProduct");
         dg.setGrade(RuleConstant.DEGRADE_GRADE_EXCEPTION_RATIO);
@@ -51,5 +59,7 @@ public class SentinelConfig {
         stockDg.setTimeWindow(10);
         stockDg.setMinRequestAmount(20);
         DegradeRuleManager.loadRules(List.of(dg, stockDg));
+
+
     }
 }

@@ -38,13 +38,13 @@ public class StockController {
     // 被限流 / 熔断时
     public Result<?> handleDeductBlock(DeductRequest request, BlockException e) {
         log.warn("stockDeduct 被限流或熔断，request={}", request);
-        return Result.error(429, "当前访问人数较多，请稍后再试");
+        return doDbFallback(request);
     }
 
     // 方法内部异常时
     public Result<?> handleDeductFallback(DeductRequest request, Throwable t) {
         log.error("stockDeduct 执行失败，request={}", request, t);
-        return Result.error(503, "服务暂时不可用，请稍后再试");
+        return doDbFallback(request);
     }
 
     @PostMapping("/sync/{productId}")
@@ -53,5 +53,13 @@ public class StockController {
         if (p == null) return Result.error(404, "商品不存在");
         stringRedisTemplate.opsForValue().set("stock:" + productId, String.valueOf(p.getStock()));
         return Result.success("已从数据库同步：" + p.getStock());
+    }
+    private Result<?> doDbFallback(DeductRequest request) {
+        try {
+            stockService.deductByDb(request.getProductId(), request.getQuantity());
+            return Result.success("扣减成功（降级模式）");
+        } catch (BizException be) {
+            return Result.error(400, be.getMessage());
+        }
     }
 }

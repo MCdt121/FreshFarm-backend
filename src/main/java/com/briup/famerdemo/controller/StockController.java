@@ -3,6 +3,7 @@ package com.briup.famerdemo.controller;
 import cn.dev33.satoken.annotation.SaCheckLogin;
 import com.alibaba.csp.sentinel.annotation.SentinelResource;
 import com.alibaba.csp.sentinel.slots.block.BlockException;
+import com.briup.famerdemo.common.BizException;
 import com.briup.famerdemo.common.Result;
 import com.briup.famerdemo.entity.DeductRequest;
 import com.briup.famerdemo.entity.Product;
@@ -25,21 +26,24 @@ public class StockController {
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
 
-    @SentinelResource(value = "stockDeduct", blockHandler = "handleDeductBlock", fallback = "handleDeductFallback")
+    @SentinelResource(value = "stockDeduct",
+            blockHandler = "handleDeductBlock",
+            fallback = "handleDeductFallback",
+            exceptionsToIgnore = BizException.class)
     @PostMapping("/deduct")
     public Result<?> deduct(@Validated @RequestBody DeductRequest request){
         stockService.deduct(request.getProductId(), request.getQuantity());
         return Result.success("扣减成功");
     }
     // 被限流 / 熔断时
-    public Result<Product> handleDeductBlock(Integer id, BlockException e) {
-        log.warn("stockDeduct 被限流或熔断，id={}", id);
+    public Result<?> handleDeductBlock(DeductRequest request, BlockException e) {
+        log.warn("stockDeduct 被限流或熔断，request={}", request);
         return Result.error(429, "当前访问人数较多，请稍后再试");
     }
 
     // 方法内部异常时
-    public Result<Product> handleDeductFallback(Integer id, Throwable t) {
-        log.error("stockDeduct 执行失败，id={}", id, t);
+    public Result<?> handleDeductFallback(DeductRequest request, Throwable t) {
+        log.error("stockDeduct 执行失败，request={}", request, t);
         return Result.error(503, "服务暂时不可用，请稍后再试");
     }
 

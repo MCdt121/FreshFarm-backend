@@ -25,17 +25,31 @@ public class SentinelConfig {
         gp.setResource("getProduct");
         gp.setGrade(RuleConstant.FLOW_GRADE_QPS);
         gp.setCount(5);
+
         FlowRule ai = new FlowRule();
         ai.setResource("aiDesc");
         ai.setGrade(RuleConstant.FLOW_GRADE_QPS);
         ai.setCount(5);
-        FlowRuleManager.loadRules(List.of(gp, ai));
+
+        FlowRule stock = new FlowRule();
+        stock.setResource("stockDeduct");
+        stock.setGrade(RuleConstant.FLOW_GRADE_QPS);
+        stock.setCount(10);   // 按你压测情况调整
+        FlowRuleManager.loadRules(List.of(gp, ai, stock));
 
         DegradeRule dg = new DegradeRule("getProduct");
         dg.setGrade(RuleConstant.DEGRADE_GRADE_EXCEPTION_RATIO);
         dg.setCount(0.5);
         dg.setTimeWindow(10);
         dg.setMinRequestAmount(5);
-        DegradeRuleManager.loadRules(List.of(dg));
+
+        // 如果库存接口也要异常熔断，注意配置 exceptionsToIgnore = BizException.class
+        // 否则“库存不足”会把 stockDeduct 熔断
+        DegradeRule stockDg = new DegradeRule("stockDeduct");
+        stockDg.setGrade(RuleConstant.DEGRADE_GRADE_EXCEPTION_RATIO);
+        stockDg.setCount(0.5);
+        stockDg.setTimeWindow(10);
+        stockDg.setMinRequestAmount(20);
+        DegradeRuleManager.loadRules(List.of(dg, stockDg));
     }
 }

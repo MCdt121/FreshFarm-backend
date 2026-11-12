@@ -1,5 +1,6 @@
 package com.briup.famerdemo.common;
 
+import com.alibaba.csp.sentinel.slots.block.BlockException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -9,7 +10,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BizException.class)
     public Result<String> handleBizException(BizException e){
         System.out.println("业务异常被拦截:"+e.getMessage());
-        return Result.error(e.getMessage());
+        return Result.error(400,e.getMessage());
     }
     @ExceptionHandler(Exception.class)
     public Result<String> handleBizException(Exception e){
@@ -28,6 +29,11 @@ public class GlobalExceptionHandler {
         String message = e.getBindingResult().getFieldError().getDefaultMessage();
         System.out.println("【参数校验拦截】：" + message);
         return Result.error(400, message); // 返回 400 表示参数错误
+    }
+    @ExceptionHandler(com.alibaba.csp.sentinel.slots.block.BlockException.class)
+    public Result<String> handleBlockException(BlockException e) {
+        System.out.println("【Sentinel 限流/熔断】：" + e.getRule());
+        return Result.error(429, "当前访问人数较多，请稍后再试");
     }
 
 }

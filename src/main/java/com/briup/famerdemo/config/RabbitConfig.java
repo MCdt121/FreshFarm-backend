@@ -4,31 +4,38 @@ import org.springframework.amqp.core.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-
 @Configuration
 public class RabbitConfig {
 
-    // 死信交换机 + 死信队列（所有业务队列共用一条就行，先跑通）
-    @Bean public DirectExchange dlxExchange() {
+    // ================= 1. 死信相关组件 =================
+    @Bean
+    public DirectExchange dlxExchange() {
         return new DirectExchange("app.dlx.exchange");
     }
-    @Bean public Queue dlq() { return new Queue("app.dlq"); }
-    @Bean public Binding dlqBinding() {
-        return BindingBuilder.bind(dlq()).to(dlxExchange()).with("dlx");
+
+    @Bean
+    public Queue dlqQueue() {
+        return new Queue("app.dlq");
     }
 
-    // 业务队列：挂上死信路由 + 限制长度/过期，作为"兜底触发死信"的条件
+    @Bean
+    public Binding dlqBinding() {
+        return BindingBuilder.bind(dlqQueue()).to(dlxExchange()).with("dlx");
+    }
+
+    // ================= 2. 业务队列 =================
     @Bean
     public Queue stockQueue() {
+        // 使用 QueueBuilder 挂载死信交换机
         return QueueBuilder.durable("product.stock.queue")
                 .withArgument("x-dead-letter-exchange", "app.dlx.exchange")
                 .withArgument("x-dead-letter-routing-key", "dlx")
-                .withArgument("x-max-length", 100_000)      // 满了挤到死信
                 .build();
     }
 
     @Bean
     public Queue productQueue() {
+        // 商品队列如果不需要死信可以先不挂
         return QueueBuilder.durable("product.queue")
                 .withArgument("x-dead-letter-exchange", "app.dlx.exchange")
                 .withArgument("x-dead-letter-routing-key", "dlx")

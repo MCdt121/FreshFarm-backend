@@ -21,11 +21,12 @@ public class StockConsumer {
         Integer quantity = Integer.parseInt(parts[1]);
 
         int rows = productMapper.deductStock(productId, quantity);
+
         if (rows > 0) {
             log.info(">>> 数据库库存扣减成功！商品ID:{}，扣减数量:{}", productId, quantity);
         } else {
-            log.error(">>> 数据库库存不足，扣减失败！商品ID:{}", productId);
-            // 关键：不要静默 return，抛这个异常让它进死信
+            log.error(">>> 数据库库存不足，扣减失败！商品ID:{}，准备进入死信", productId);
+            // 业务失败，抛出此异常让 rabbitMQ 拒绝该消息，分发到死信队列
             throw new AmqpRejectAndDontRequeueException("DB库存不足:" + productId);
         }
     }

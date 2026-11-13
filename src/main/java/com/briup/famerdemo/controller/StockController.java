@@ -26,25 +26,10 @@ public class StockController {
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
 
-    @SentinelResource(value = "stockDeduct",
-            blockHandler = "handleDeductBlock",
-            fallback = "handleDeductFallback",
-            exceptionsToIgnore = BizException.class)
     @PostMapping("/deduct")
     public Result<?> deduct(@Validated @RequestBody DeductRequest request){
         stockService.deduct(request.getProductId(), request.getQuantity());
         return Result.success("扣减成功");
-    }
-    // 被限流 / 熔断时
-    public Result<?> handleDeductBlock(DeductRequest request, BlockException e) {
-        log.warn("stockDeduct 被限流或熔断，request={}", request);
-        return doDbFallback(request);
-    }
-
-    // 方法内部异常时
-    public Result<?> handleDeductFallback(DeductRequest request, Throwable t) {
-        log.error("stockDeduct 执行失败，request={}", request, t);
-        return doDbFallback(request);
     }
 
     @PostMapping("/sync/{productId}")

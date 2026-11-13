@@ -21,45 +21,32 @@ public class SentinelConfig {
 
     @PostConstruct
     public void initRules() {
-        //stock商品扣减降级限流
+        // 只保留降级路径的流控（保护 DB）
         FlowRule dbFallback = new FlowRule();
         dbFallback.setResource("stockDeductDbFallback");
         dbFallback.setGrade(RuleConstant.FLOW_GRADE_QPS);
-        dbFallback.setCount(10);
+        dbFallback.setCount(10); // DB 只能承受 10 QPS，保护它
         dbFallback.setControlBehavior(RuleConstant.CONTROL_BEHAVIOR_RATE_LIMITER);
         dbFallback.setMaxQueueingTimeMs(500);
-        //
+
+        // 保留商品查询和AI的规则
         FlowRule gp = new FlowRule();
         gp.setResource("getProduct");
         gp.setGrade(RuleConstant.FLOW_GRADE_QPS);
-        gp.setCount(5);
-        //springai
+        gp.setCount(500);
+
         FlowRule ai = new FlowRule();
         ai.setResource("aiDesc");
         ai.setGrade(RuleConstant.FLOW_GRADE_QPS);
         ai.setCount(5);
 
-        FlowRule stock = new FlowRule();
-        stock.setResource("stockDeduct");
-        stock.setGrade(RuleConstant.FLOW_GRADE_QPS);
-        stock.setCount(10);   // 按你压测情况调整
-        FlowRuleManager.loadRules(List.of(gp, ai, stock,dbFallback));
+        FlowRuleManager.loadRules(List.of(gp, ai, dbFallback));
 
         DegradeRule dg = new DegradeRule("getProduct");
         dg.setGrade(RuleConstant.DEGRADE_GRADE_EXCEPTION_RATIO);
         dg.setCount(0.5);
         dg.setTimeWindow(10);
         dg.setMinRequestAmount(5);
-
-        // 如果库存接口也要异常熔断，注意配置 exceptionsToIgnore = BizException.class
-        // 否则“库存不足”会把 stockDeduct 熔断
-        DegradeRule stockDg = new DegradeRule("stockDeduct");
-        stockDg.setGrade(RuleConstant.DEGRADE_GRADE_EXCEPTION_RATIO);
-        stockDg.setCount(0.5);
-        stockDg.setTimeWindow(10);
-        stockDg.setMinRequestAmount(20);
-        DegradeRuleManager.loadRules(List.of(dg, stockDg));
-
-
+        DegradeRuleManager.loadRules(List.of(dg));
     }
 }

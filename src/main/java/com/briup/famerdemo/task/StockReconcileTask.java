@@ -29,21 +29,20 @@ public class StockReconcileTask {
             String key = "stock:" + p.getId();
             try {
                 String redisVal = stringRedisTemplate.opsForValue().get(key);
-                if (redisVal == null) continue; // 没预热过的商品，不参与对账
+                if (redisVal == null) continue;
 
                 int redisStock;
                 try {
                     redisStock = Integer.parseInt(redisVal);
                 } catch (NumberFormatException nfe) {
                     log.error("【对账】Redis 值非法 productId={}, redis={}", p.getId(), redisVal);
-                    redisStock = -1;
+                    continue;
                 }
 
                 if (redisStock != p.getStock()) {
-                    log.error("【对账】库存不一致 productId={}, redis={}, db={}",
-                            p.getId(), redisVal, p.getStock());
-                    stringRedisTemplate.opsForValue()
-                            .set(key, String.valueOf(p.getStock()));
+                    // 只告警，不直接覆盖：在途扣减可能尚未落库，直接 set 会冲掉
+                    log.error("【对账】库存不一致 productId={}, redis={}, db={}，需人工或加锁后修复",
+                            p.getId(), redisStock, p.getStock());
                 }
             } catch (Exception e) {
                 log.error("【对账】处理 productId={} 失败", p.getId(), e);

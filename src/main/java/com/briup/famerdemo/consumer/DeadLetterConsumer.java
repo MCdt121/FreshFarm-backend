@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.TimeUnit;
+
 @Slf4j
 @Component
 public class DeadLetterConsumer {
@@ -18,21 +20,33 @@ public class DeadLetterConsumer {
     public void onDeadLetter(Message msg) {
         String body = new String(msg.getBody());
 
-        // 兼容 byte[] 解析队列名
         Object raw = msg.getMessageProperties().getHeaders().get("x-first-death-queue");
         String originQueue = raw == null ? "unknown"
                 : (raw instanceof byte[] b ? new String(b) : raw.toString());
 
         log.error("【死信告警】来源队列={}, body={}", originQueue, body);
 
-        // 针对库存扣减死信，回滚 Redis
         if ("product.stock.queue".equals(originQueue)) {
             try {
                 String[] parts = body.split(":");
-                Integer productId = Integer.parseInt(parts[0]);
-                Integer quantity = Integer.parseInt(parts[1]);
+                if (parts.length != 3) {
+                    log.error("【死信补偿】消息格式非法，body={}", body);
+                    return;
+                }
 
-                // 把预扣的库存加回去
+                String messageId = parts[0];
+                Integer productId = Integer.parseInt(parts[1]);
+                Integer quantity = Integer.parseInt(parts[2]);
+
+                // 死信补偿幂等：同一条消息只回滚一次
+                String compensateKey = "mq:dlq:compensate:" + messageId;
+                Boolean first = stringRedisTemplate.opsForValue()
+                        .setIfAbsent(compensateKey, "1", 24, TimeUnit.HOURS);
+                if (Boolean.FALSE.equals(first)) {
+                    log.warn("【死信补偿】重复死信，跳过，messageId={}", messageId);
+                    return;
+                }
+
                 Long after = stringRedisTemplate.opsForValue()
                         .increment("stock:" + productId, quantity);
                 log.warn("【死信补偿】Redis 库存已回滚，productId={}, +{}, 现库存={}",

@@ -81,7 +81,8 @@ public class StockServiceImpl extends ServiceImpl<ProductMapper, Product> implem
             }
 
             // 4. 扣减成功，发 MQ 消息，异步去扣数据库
-            String mqMessage = productId + ":" + quantity;
+            String messageId = java.util.UUID.randomUUID().toString();
+            String mqMessage = messageId + ":" + productId + ":" + quantity;
             try {
                 rabbitTemplate.convertAndSend("", "product.stock.queue", mqMessage);
             } catch (Exception e) {
